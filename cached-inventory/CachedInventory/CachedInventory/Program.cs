@@ -42,6 +42,7 @@ app.MapPost(
   .WithName("RetrieveStock")
   .WithOpenApi();
 
+
 app.MapPost(
     "/stock/restock",
     async ([FromServices] IWarehouseStockSystemClient client, [FromBody] RestockRequest req) =>
@@ -52,6 +53,11 @@ app.MapPost(
     })
   .WithName("Restock")
   .WithOpenApi();
+
+app.MapGet(
+  "/stock/verify-from-file/{productId:int}",
+  async ([FromServices] IWarehouseStockSystemClient client, int productId) =>
+  await client.GetStockDirectlyFromFile(productId));
 
 app.Run();
 

@@ -17,6 +17,13 @@ public interface IWarehouseStockSystemClient
   /// <param name="productId">El identificador del producto a actualizar.</param>
   /// <param name="newAmount">La cantidad de producto a asignar.</param>
   Task UpdateStock(int productId, int newAmount);
+
+  /// <summary>
+  ///   NO USAR, Simula comprobar el fichero directamente, se usa para testear.
+  /// </summary>
+  /// <param name="productId">El identificador del producto.</param>
+  /// <returns>El stock de dicho producto.</returns>
+  Task<int> GetStockDirectlyFromFile(int productId);
 }
 
 /// <summary>
@@ -52,6 +59,9 @@ public class WarehouseStockSystemClient : IWarehouseStockSystemClient
       return 0;
     }
   }
+
+  public async Task<int> GetStockDirectlyFromFile(int productId) =>
+    JsonSerializer.Deserialize<LegacyStock>(await File.ReadAllTextAsync(GetFileName(productId)))!.Amount;
 
   /// <summary>
   ///   Actualiza el stock de un producto.

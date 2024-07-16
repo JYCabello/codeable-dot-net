@@ -5,7 +5,12 @@ using System.Text.Json;
 
 public class StockTester(int totalToRetrieve, bool isParallel, int operationCount, int productId)
 {
+  private const string LegacyFileStorageTemplate = "stock-{id}.json";
   private const string Url = "http://localhost:5250";
+
+  private static readonly string LegacyFileStorage =
+    Environment.GetEnvironmentVariable("LEGACY_FILE_STORAGE") ?? "../CachedInventory/";
+
   private readonly HttpClient client = new();
   private int requestCount;
   private Stopwatch stopwatch = new();
@@ -87,6 +92,26 @@ public class StockTester(int totalToRetrieve, bool isParallel, int operationCoun
         finalStock);
     }
 
+    stopwatch.Stop();
+
+    // Tiempo de espera para que se actualice el stock en el sistema antiguo.
+    await Task.Delay(3_000);
+    var stockFromFile = await GetStockFromFile();
+    if (stockFromFile != 0)
+    {
+      OutputResult($"El fichero de stock no se actualizó correctamente. Stock en el fichero: {stockFromFile}.");
+      return new(
+        $"El fichero de stock no se actualizó correctamente. Stock en el fichero: {stockFromFile}.",
+        totalToRetrieve,
+        isParallel,
+        operationCount,
+        productId,
+        stopwatch.ElapsedMilliseconds,
+        stopwatch.ElapsedMilliseconds / requestCount,
+        false,
+        finalStock);
+    }
+
     OutputResult("Completado con éxito.");
     return new(
       "Operación completada con éxito.",
@@ -116,6 +141,13 @@ public class StockTester(int totalToRetrieve, bool isParallel, int operationCoun
     var response = await client.GetAsync($"{Url}/stock/{productId}");
     var content = await response.Content.ReadAsStringAsync();
     requestCount++;
+    return int.Parse(content);
+  }
+
+  private async Task<int> GetStockFromFile()
+  {
+    var response = await client.GetAsync($"{Url}/stock/verify-from-file/{productId}");
+    var content = await response.Content.ReadAsStringAsync();
     return int.Parse(content);
   }
 
@@ -156,6 +188,12 @@ public class StockTester(int totalToRetrieve, bool isParallel, int operationCoun
 
     OutputResult("El stock ya está en el nivel deseado.");
   }
+
+  private static string GetFileName(int productId) => Path.Combine(
+    LegacyFileStorage,
+    LegacyFileStorageTemplate.Replace("{id}", productId.ToString()));
+
+  private record LegacyStock(int ProductId, int Amount);
 }
 
 public record RunResult(
