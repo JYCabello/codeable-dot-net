@@ -1,14 +1,17 @@
 ﻿using CachedInventoryClient;
 
-var results = new List<RunResult>();
-for (var parallelism = 1; parallelism < 4; parallelism++)
+var productId = 1;
+var resultTasks = new List<Task<RunResult>>();
+for (var operationCount = 5; operationCount < 9; operationCount++)
 {
   foreach (var isParallel in new[] { true, false })
   {
-    results.Add(await new StockClient(50, isParallel, parallelism, 4).Run());
+    resultTasks.Add(new StockTester(50, isParallel, operationCount, productId).Run());
+    Interlocked.Increment(ref productId);
   }
 }
 
+var results = await Task.WhenAll(resultTasks);
 Console.WriteLine("Todas las operaciones se ejecutaron, mostrando los resultados:\n\n");
 
 if (results.All(r => r.WasSuccessful))

@@ -3,7 +3,7 @@ namespace CachedInventoryClient;
 using System.Diagnostics;
 using System.Text.Json;
 
-public class StockClient(int totalToRetrieve, bool isParallel, int operationCount, int productId)
+public class StockTester(int totalToRetrieve, bool isParallel, int operationCount, int productId)
 {
   private const string Url = "http://localhost:5250";
   private readonly HttpClient client = new();
@@ -35,10 +35,8 @@ public class StockClient(int totalToRetrieve, bool isParallel, int operationCoun
     OutputResult("Inicio de la operación.");
     await Restock();
     var amountPerOperation = totalToRetrieve / operationCount;
-    var remaining = totalToRetrieve % operationCount;
     var amounts = Enumerable.Range(0, operationCount + 1)
-      .Select(_ => amountPerOperation)
-      .Concat(remaining > 0 ? [remaining] : []);
+      .Select(_ => amountPerOperation).ToArray();
     var tasks = new List<Task<bool>>();
     foreach (var amount in amounts)
     {
@@ -49,6 +47,12 @@ public class StockClient(int totalToRetrieve, bool isParallel, int operationCoun
       }
 
       tasks.Add(task);
+    }
+
+    var remaining = totalToRetrieve - amounts.Sum();
+    if (remaining > 0)
+    {
+      tasks.Add(Retrieve(remaining));
     }
 
     var results = await Task.WhenAll(tasks);
