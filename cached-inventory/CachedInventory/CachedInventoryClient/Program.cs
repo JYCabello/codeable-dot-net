@@ -2,7 +2,7 @@
 
 var productId = 1;
 var resultTasks = new List<Task<RunResult>>();
-for (var operationCount = 5; operationCount < 9; operationCount++)
+for (var operationCount = 1; operationCount < 11; operationCount++)
 {
   foreach (var isParallel in new[] { true, false })
   {

@@ -32,6 +32,7 @@ Parcial o completa, poco a poco, no se espera que se resuelva en ejercicio compl
     - Una base de datos NoSQL podría ser una solución intermedia, pero no es tan sencillo como una caché en memoria ni tan consistente como una base de datos SQL.
 - No te preocupes por la seguridad, no es un problema en este ejercicio.
 - No te preocupes por la escalabilidad, no es un problema en este ejercicio.
+- Puedes asumir que nunca va a haber dos copias de esta API ejecutándose en paralelo, no pienses más allá de un único servicio en ejecución.
 
 ## Notas
 La concurrencia y la consistencia son problemas difíciles, no te preocupes si no consigues resolverlos, lo importante es que lo intentes y que entiendas lo que vas haciendo a cada paso.
