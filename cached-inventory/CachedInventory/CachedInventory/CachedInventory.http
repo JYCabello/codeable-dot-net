@@ -3,4 +3,4 @@
 GET {{CachedInventory_HostAddress}}/weatherforecast/
 Accept: application/json
 
-###
+

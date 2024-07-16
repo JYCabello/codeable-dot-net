@@ -1,9 +1,13 @@
+using CachedInventory;
+using Microsoft.AspNetCore.Mvc;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<IWarehouseStockSystemClient, WarehouseStockSystemClient>();
 
 var app = builder.Build();
 
@@ -16,29 +20,41 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-  "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+app.MapGet(
+    "/stock/{productId:int}",
+    async ([FromServices] IWarehouseStockSystemClient client, int productId) => await client.GetStock(productId))
+  .WithName("GetStock")
+  .WithOpenApi();
 
-app.MapGet("/weatherforecast", () =>
-  {
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-          DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-          Random.Shared.Next(-20, 55),
-          summaries[Random.Shared.Next(summaries.Length)]
-        ))
-      .ToArray();
-    return forecast;
-  })
-  .WithName("GetWeatherForecast")
+app.MapPost(
+    "/stock/retrieve",
+    async ([FromServices] IWarehouseStockSystemClient client, [FromBody] RetrieveStockRequest req) =>
+    {
+      var stock = await client.GetStock(req.ProductId);
+      if (stock < req.Amount)
+      {
+        return Results.BadRequest("Not enough stock.");
+      }
+
+      await client.UpdateStock(req.ProductId, stock - req.Amount);
+      return Results.Ok();
+    })
+  .WithName("RetrieveStock")
+  .WithOpenApi();
+
+app.MapPost(
+    "/stock/restock",
+    async ([FromServices] IWarehouseStockSystemClient client, [FromBody] RestockRequest req) =>
+    {
+      var stock = await client.GetStock(req.ProductId);
+      await client.UpdateStock(req.ProductId, req.Amount + stock);
+      return Results.Ok();
+    })
+  .WithName("Restock")
   .WithOpenApi();
 
 app.Run();
 
-internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-  public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+public record RetrieveStockRequest(int ProductId, int Amount);
+
+public record RestockRequest(int ProductId, int Amount);
