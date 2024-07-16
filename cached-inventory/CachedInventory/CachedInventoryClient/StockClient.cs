@@ -28,7 +28,7 @@ public class StockClient(int totalToRetrieve, bool isParallel, int operationCoun
   private void OutputResult(string message) =>
     Console.WriteLine($"Mensaje: {message}\nConfiguración: {SettingsSummary}");
 
-  public async Task Run()
+  public async Task<RunResult> Run()
   {
     stopwatch = Stopwatch.StartNew();
     requestCount = 0;
@@ -55,17 +55,39 @@ public class StockClient(int totalToRetrieve, bool isParallel, int operationCoun
     if (!results.All(r => r))
     {
       OutputResult("Error al retirar el stock.");
-      return;
+      return new(
+        totalToRetrieve,
+        isParallel,
+        operationCount,
+        productId,
+        stopwatch.ElapsedMilliseconds,
+        stopwatch.ElapsedMilliseconds / requestCount,
+        false);
     }
 
     var finalStock = await GetStock();
     if (finalStock != 0)
     {
       OutputResult($"El stock final es {finalStock} en lugar de 0.");
-      return;
+      return new(
+        totalToRetrieve,
+        isParallel,
+        operationCount,
+        productId,
+        stopwatch.ElapsedMilliseconds,
+        stopwatch.ElapsedMilliseconds / requestCount,
+        false);
     }
 
     OutputResult("Completado con éxito.");
+    return new(
+      totalToRetrieve,
+      isParallel,
+      operationCount,
+      productId,
+      stopwatch.ElapsedMilliseconds,
+      stopwatch.ElapsedMilliseconds / requestCount,
+      true);
   }
 
   private async Task<bool> Retrieve(int amount)
@@ -89,12 +111,12 @@ public class StockClient(int totalToRetrieve, bool isParallel, int operationCoun
 
   private async Task Restock()
   {
-    Console.WriteLine("Setting up initial stock");
+    Console.WriteLine("Preparando stock inicial...");
     var currentStock = await GetStock();
     var missingStock = totalToRetrieve - currentStock;
     if (missingStock > 0)
     {
-      Console.WriteLine($"Missing stock: {missingStock}. Restocking...");
+      Console.WriteLine($"Falta: {missingStock}. Reponiendo...");
       var restockRequest = new { productId, amount = missingStock };
       var restockRequestJson = JsonSerializer.Serialize(restockRequest);
       var restockRequestContent = new StringContent(restockRequestJson);
@@ -111,7 +133,7 @@ public class StockClient(int totalToRetrieve, bool isParallel, int operationCoun
 
     if (missingStock < 0)
     {
-      Console.WriteLine($"Excess stock: {missingStock}. Removing...");
+      Console.WriteLine($"Exceso: {missingStock}. Eliminando...");
       if (!await Retrieve(-missingStock))
       {
         OutputResult("Error al reponer el stock inicial.");
@@ -125,3 +147,12 @@ public class StockClient(int totalToRetrieve, bool isParallel, int operationCoun
     OutputResult("El stock ya está en el nivel deseado.");
   }
 }
+
+public record RunResult(
+  int TotalToRetrieve,
+  bool IsParallel,
+  int OperationCount,
+  int ProductId,
+  long TimeElapsed,
+  long TimeElapsedPerRequest,
+  bool WasSuccessful);

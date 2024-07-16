@@ -1,6 +1,23 @@
 ﻿using CachedInventoryClient;
 
-const string CachedInventory_HostAddress = "http://localhost:5250";
+var results = new List<RunResult>();
+for (var parallelism = 1; parallelism < 4; parallelism++)
+{
+  foreach (var isParallel in new[] { true, false })
+  {
+    results.Add(await new StockClient(50, isParallel, parallelism, 4).Run());
+  }
+}
 
-var stockClient = new StockClient(50, true, 1, 4);
-await stockClient.Run();
+Console.WriteLine("Todas las operaciones se ejecutaron, mostrando los resultados:\n\n");
+
+if (results.All(r => r.WasSuccessful))
+{
+  Console.WriteLine("¡Todas las operaciones se completaron con éxito!");
+  return;
+}
+
+foreach (var result in results)
+{
+  Console.WriteLine(result);
+}
