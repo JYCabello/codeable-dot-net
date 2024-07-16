@@ -1,20 +1,37 @@
 namespace CachedInventoryClient;
 
+using System.Diagnostics;
 using System.Text.Json;
 
 public class StockClient(int totalToRetrieve, bool isParallel, int operationCount, int productId)
 {
   private const string Url = "http://localhost:5250";
   private readonly HttpClient client = new();
+  private int requestCount;
+  private Stopwatch stopwatch = new();
 
   private string SettingsSummary =>
-    $"\n- Total para retirar: {totalToRetrieve}.\n- En paralelo: {isParallel}.\n- Total de operaciones: {operationCount}.\n- ID del producto: {productId}";
+    $"""
+
+     - Total para retirar: {totalToRetrieve}.
+     - En paralelo: {isParallel}.
+     - Total de operaciones: {operationCount}.
+     - ID del producto: {productId} 
+     - Tiempo transcurrido: {stopwatch.ElapsedMilliseconds} ms.
+     - Tiempo medio por solicitud: {TimeElapsedPerRequest} ms.
+     """;
+
+  private string TimeElapsedPerRequest => requestCount == 0
+    ? "[no disponible]"
+    : (stopwatch.ElapsedMilliseconds / requestCount).ToString();
 
   private void OutputResult(string message) =>
     Console.WriteLine($"Mensaje: {message}\nConfiguración: {SettingsSummary}");
 
   public async Task Run()
   {
+    stopwatch = Stopwatch.StartNew();
+    requestCount = 0;
     OutputResult("Inicio de la operación.");
     await Restock();
     var amountPerOperation = totalToRetrieve / operationCount;
@@ -58,6 +75,7 @@ public class StockClient(int totalToRetrieve, bool isParallel, int operationCoun
     var retrieveRequestContent = new StringContent(retrieveRequestJson);
     retrieveRequestContent.Headers.ContentType = new("application/json");
     var response = await client.PostAsync($"{Url}/stock/retrieve", retrieveRequestContent);
+    requestCount++;
     return response.IsSuccessStatusCode;
   }
 
@@ -65,6 +83,7 @@ public class StockClient(int totalToRetrieve, bool isParallel, int operationCoun
   {
     var response = await client.GetAsync($"{Url}/stock/{productId}");
     var content = await response.Content.ReadAsStringAsync();
+    requestCount++;
     return int.Parse(content);
   }
 
@@ -81,6 +100,7 @@ public class StockClient(int totalToRetrieve, bool isParallel, int operationCoun
       var restockRequestContent = new StringContent(restockRequestJson);
       restockRequestContent.Headers.ContentType = new("application/json");
       var response = await client.PostAsync($"{Url}/stock/restock", restockRequestContent);
+      requestCount++;
       if (!response.IsSuccessStatusCode)
       {
         OutputResult("Error al reponer el stock.");
@@ -92,15 +112,12 @@ public class StockClient(int totalToRetrieve, bool isParallel, int operationCoun
     if (missingStock < 0)
     {
       Console.WriteLine($"Excess stock: {missingStock}. Removing...");
-      var retrieveStockRequest = new { productId, amount = -missingStock };
-      var retrieveStockRequestJson = JsonSerializer.Serialize(retrieveStockRequest);
-      var retrieveStockRequestContent = new StringContent(retrieveStockRequestJson);
-      retrieveStockRequestContent.Headers.ContentType = new("application/json");
-      var response = await client.PostAsync($"{Url}/stock/retrieve", retrieveStockRequestContent);
-      if (!response.IsSuccessStatusCode)
+      if (!await Retrieve(-missingStock))
       {
         OutputResult("Error al reponer el stock inicial.");
       }
+
+      requestCount++;
 
       return;
     }
