@@ -203,6 +203,6 @@ public record RunResult(
   int OperationCount,
   int ProductId,
   long TimeElapsed,
-  long TimeElapsedPerRequest,
+  long AverageTimeElapsedPerRequest,
   bool WasSuccessful,
   int FinalStock);

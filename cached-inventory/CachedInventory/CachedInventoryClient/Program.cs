@@ -16,6 +16,7 @@ var results = await Task.WhenAll(resultTasks);
 if (results.All(r => r.WasSuccessful))
 {
   Console.WriteLine("¡Todas las operaciones se completaron con éxito!");
+  PrintSlowRequests();
   return;
 }
 
@@ -26,4 +27,22 @@ Console.WriteLine("Resultados:");
 foreach (var result in results.OrderBy(r => r.WasSuccessful).ThenBy(r => r.ProductId))
 {
   Console.WriteLine(result);
+}
+
+PrintSlowRequests();
+
+void PrintSlowRequests()
+{
+  const int slowRequestThreshold = 350;
+  var slowRequests = results.Where(r => slowRequestThreshold < r.AverageTimeElapsedPerRequest).ToList();
+  if (slowRequests.Count == 0)
+  {
+    Console.WriteLine("No hubo solicitudes lentas.");
+    return;
+  }
+
+  foreach (var slowRequest in slowRequests)
+  {
+    Console.WriteLine($"Solicitud con más de {slowRequestThreshold} ms de media:\n {slowRequest}");
+  }
 }
