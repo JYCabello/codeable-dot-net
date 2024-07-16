@@ -2,7 +2,7 @@
 
 var productId = 1;
 var resultTasks = new List<Task<RunResult>>();
-for (var operationCount = 1; operationCount < 11; operationCount++)
+for (var operationCount = 1; operationCount < 5; operationCount++)
 {
   foreach (var isParallel in new[] { true, false })
   {
@@ -30,11 +30,14 @@ foreach (var result in results.OrderBy(r => r.WasSuccessful).ThenBy(r => r.Produ
 }
 
 PrintSlowRequests();
+return;
 
 void PrintSlowRequests()
 {
   const int slowRequestThreshold = 350;
-  var slowRequests = results.Where(r => slowRequestThreshold < r.AverageTimeElapsedPerRequest).ToList();
+  var slowRequests = results
+    .Where(r => r is { WasSuccessful: true, AverageTimeElapsedPerRequest: > slowRequestThreshold })
+    .ToList();
   if (slowRequests.Count == 0)
   {
     Console.WriteLine("No hubo solicitudes lentas.");
