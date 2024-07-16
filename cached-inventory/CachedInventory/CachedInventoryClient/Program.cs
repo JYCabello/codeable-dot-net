@@ -12,7 +12,6 @@ for (var operationCount = 5; operationCount < 9; operationCount++)
 }
 
 var results = await Task.WhenAll(resultTasks);
-Console.WriteLine("Todas las operaciones se ejecutaron, mostrando los resultados:\n\n");
 
 if (results.All(r => r.WasSuccessful))
 {
@@ -20,7 +19,11 @@ if (results.All(r => r.WasSuccessful))
   return;
 }
 
-foreach (var result in results)
+Console.WriteLine($"Operaciones con errores: {results.Count(r => !r.WasSuccessful)}");
+Console.WriteLine($"Operaciones completadas con éxito: {results.Count(r => r.WasSuccessful)}");
+Console.WriteLine("Resultados:");
+
+foreach (var result in results.OrderBy(r => r.WasSuccessful).ThenBy(r => r.ProductId))
 {
   Console.WriteLine(result);
 }

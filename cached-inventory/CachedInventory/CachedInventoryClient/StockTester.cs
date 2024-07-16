@@ -35,7 +35,7 @@ public class StockTester(int totalToRetrieve, bool isParallel, int operationCoun
     OutputResult("Inicio de la operación.");
     await Restock();
     var amountPerOperation = totalToRetrieve / operationCount;
-    var amounts = Enumerable.Range(0, operationCount + 1)
+    var amounts = Enumerable.Range(0, operationCount)
       .Select(_ => amountPerOperation).ToArray();
     var tasks = new List<Task<bool>>();
     foreach (var amount in amounts)
@@ -60,13 +60,15 @@ public class StockTester(int totalToRetrieve, bool isParallel, int operationCoun
     {
       OutputResult("Error al retirar el stock.");
       return new(
+        "Error al retirar el stock.",
         totalToRetrieve,
         isParallel,
         operationCount,
         productId,
         stopwatch.ElapsedMilliseconds,
         stopwatch.ElapsedMilliseconds / requestCount,
-        false);
+        false,
+        await GetStock());
     }
 
     var finalStock = await GetStock();
@@ -74,24 +76,28 @@ public class StockTester(int totalToRetrieve, bool isParallel, int operationCoun
     {
       OutputResult($"El stock final es {finalStock} en lugar de 0.");
       return new(
+        $"El stock final es {finalStock} en lugar de 0.",
         totalToRetrieve,
         isParallel,
         operationCount,
         productId,
         stopwatch.ElapsedMilliseconds,
         stopwatch.ElapsedMilliseconds / requestCount,
-        false);
+        false,
+        finalStock);
     }
 
     OutputResult("Completado con éxito.");
     return new(
+      "Operación completada con éxito.",
       totalToRetrieve,
       isParallel,
       operationCount,
       productId,
       stopwatch.ElapsedMilliseconds,
       stopwatch.ElapsedMilliseconds / requestCount,
-      true);
+      true,
+      await GetStock());
   }
 
   private async Task<bool> Retrieve(int amount)
@@ -153,10 +159,12 @@ public class StockTester(int totalToRetrieve, bool isParallel, int operationCoun
 }
 
 public record RunResult(
+  string Message,
   int TotalToRetrieve,
   bool IsParallel,
   int OperationCount,
   int ProductId,
   long TimeElapsed,
   long TimeElapsedPerRequest,
-  bool WasSuccessful);
+  bool WasSuccessful,
+  int FinalStock);
