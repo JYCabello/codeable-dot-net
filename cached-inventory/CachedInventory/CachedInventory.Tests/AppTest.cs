@@ -43,7 +43,7 @@ internal static class TestApiPerformance
     foreach (var retrieval in retrievals)
     {
       var task = setup.Retrieve(productId, retrieval);
-      if (isParallel)
+      if (!isParallel)
       {
         await task;
       }
