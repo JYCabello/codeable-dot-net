@@ -5,12 +5,7 @@ using System.Text.Json;
 
 public class StockTester(int totalToRetrieve, bool isParallel, int operationCount, int productId)
 {
-  private const string LegacyFileStorageTemplate = "stock-{id}.json";
   private const string Url = "http://localhost:5250";
-
-  private static readonly string LegacyFileStorage =
-    Environment.GetEnvironmentVariable("LEGACY_FILE_STORAGE") ?? "../CachedInventory/";
-
   private readonly HttpClient client = new();
   private int requestCount;
   private Stopwatch stopwatch = new();
@@ -188,12 +183,6 @@ public class StockTester(int totalToRetrieve, bool isParallel, int operationCoun
 
     OutputResult("El stock ya está en el nivel deseado.");
   }
-
-  private static string GetFileName(int productId) => Path.Combine(
-    LegacyFileStorage,
-    LegacyFileStorageTemplate.Replace("{id}", productId.ToString()));
-
-  private record LegacyStock(int ProductId, int Amount);
 }
 
 public record RunResult(
