@@ -4,31 +4,31 @@ namespace CachedInventory.Tests;
 
 public class SingleRetrieval
 {
-  [Fact(DisplayName = "retrieve a single product")]
+  [Fact(DisplayName = "retirar un producto")]
   public static async Task Test() => await TestApiPerformance.Test(1, [3], false, 2_000);
 }
 
 public class FourRetrievalsInParallel
 {
-  [Fact(DisplayName = "retrieve four products in parallel")]
+  [Fact(DisplayName = "retirar cuatro productos en paralelo")]
   public static async Task Test() => await TestApiPerformance.Test(2, [1, 2, 3, 4], true, 1_000);
 }
 
 public class FourRetrievalsSequentially
 {
-  [Fact(DisplayName = "retrieve four products sequentially")]
+  [Fact(DisplayName = "retirar cuatro productos secuencialmente")]
   public static async Task Test() => await TestApiPerformance.Test(3, [1, 2, 3, 4], false, 1_000);
 }
 
 public class SevenRetrievalsInParallel
 {
-  [Fact(DisplayName = "retrieve seven products in parallel")]
+  [Fact(DisplayName = "retirar siete productos en paralelo")]
   public static async Task Test() => await TestApiPerformance.Test(4, [1, 2, 3, 4, 5, 6, 7], true, 500);
 }
 
 public class SevenRetrievalsSequentially
 {
-  [Fact(DisplayName = "retrieve seven products sequentially")]
+  [Fact(DisplayName = "retirar siete productos secuencialmente")]
   public static async Task Test() => await TestApiPerformance.Test(5, [1, 2, 3, 4, 5, 6, 7], false, 500);
 }
 
